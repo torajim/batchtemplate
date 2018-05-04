@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.skplanet.sellerpcs.batch.domain.sendemail.repository.TestMapper">
+    <resultMap id="productSalesResultMap" type="ProductSales">
+        <result property="basiDt" column="basi_dt"/>
+        <result property="ordAmt" column="ord_amt"/>
+    </resultMap>
+
+    <select id="selectProductSalesByProductNo" parameterType="hashmap" resultMap="productSalesResultMap">
+        <![CDATA[
+        SELECT
+            BASI_DT
+            ,SUM(ORD_AMT) ORD_AMT
+        FROM (SELECT
+                TRUNC(SYSDATE - LEVEL) BASI_DT
+              FROM DUAL CONNECT BY LEVEL <= #{dayRange} ) X_POS,
+             (SELECT
+                ORD_DT
+                ,NVL(ORD_PRD_WON_STL-(ORD_CN_AMT+ORD_OPT_CN_AMT), 0) ORD_AMT
+              FROM TR_ORD_PRD TA
+              WHERE 1=1
+                AND PRD_NO = #{productNo}
+                AND ORD_DT >= TRUNC(SYSDATE - #{dayRange})
+                AND ORD_DT < TRUNC(SYSDATE) ) DATA
+        WHERE X_POS.BASI_DT BETWEEN TRUNC(ORD_DT(+)) AND TRUNC(ORD_DT(+))
+        GROUP BY BASI_DT
+        ORDER BY BASI_DT ASC
+        ]]>
+    </select>
+</mapper>
